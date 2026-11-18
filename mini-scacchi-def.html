@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini Scacchi Didattici</title>
+<meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#f0f2f5;--fg:#222;--card:#e6f0ff;--cardfg:#0b3d7a;--btn:#007aff;--lt:#ebd9b4;--dk:#b58863;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181c;--fg:#eee;--card:#1f2a3d;--cardfg:#cfe2ff}}
+:root[data-theme="dark"]{--bg:#17181c;--fg:#eee;--card:#1f2a3d;--cardfg:#cfe2ff}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden}
+h1{font-size:1.2rem;margin:0}
+select{font-size:.9rem;padding:3px}
+#status{width:min(92vw,520px);min-height:3.2rem;display:flex;align-items:center;justify-content:center;text-align:center;
+font-size:.88rem;font-weight:500;padding:4px 10px;background:var(--card);color:var(--cardfg);border-radius:8px;box-sizing:border-box;white-space:pre-line}
+#board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+width:min(94vw,56dvh);height:min(94vw,56dvh);border:4px solid #333;border-radius:4px;box-shadow:0 8px 16px rgba(0,0,0,.25)}
+.sq{position:relative;display:flex;align-items:center;justify-content:center;font-size:min(9vw,5.4dvh);
+cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.l{background:var(--lt)}.d{background:var(--dk)}
+.sel{background:#f6f669!important}.last{box-shadow:inset 0 0 0 100px rgba(255,235,59,.35)}
+.chk{background:#ff6b6b!important}
+.w{color:#fff;text-shadow:0 0 2px #000,0 1px 2px #000}.b{color:#111}
+.dot::after{content:"";position:absolute;width:28%;height:28%;border-radius:50%;background:rgba(0,0,0,.25)}
+.cap::after{width:88%;height:88%;background:none;border:4px solid rgba(0,0,0,.3);box-sizing:border-box}
+.co{position:absolute;font-size:min(2.2vw,1.3dvh);font-weight:700;pointer-events:none}
+.co.r{top:2px;left:3px}.co.f{bottom:1px;right:3px}
+.l .co{color:var(--dk)}.d .co{color:var(--lt)}
+button{padding:9px 18px;font-size:.9rem;background:var(--btn);color:#fff;border:0;border-radius:8px;cursor:pointer}
+button:active{opacity:.8}
+#promo{display:none;gap:8px}
+#promo button{font-size:1.8rem;padding:2px 14px;background:#fff;color:#111}
+</style>
+</head>
+<body>
+<h1>Mini Scacchi Didattici</h1>
+<label>Modalità:
+<select id="mode" onchange="resetGame()">
+<option value="pvp">Giocatore contro giocatore</option>
+<option value="pvc" selected>Giocatore contro computer</option>
+</select></label>
+<div id="status"></div>
+<div id="board"></div>
+<div id="promo"></div>
+<button onclick="resetGame()">Nuova partita</button>
+
+<script>
+const G={r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',p:'♟'};
+const FILES='abcdefgh';
+const VAL={p:100,n:320,b:330,r:500,q:900,k:0};
+const KN=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
+const KG=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+const RK=KG.slice(0,4),BS=KG.slice(4);
+
+// Libro delle aperture: cronologia mosse -> risposta del Nero e spiegazione
+const BOOK={
+"e2e4":["c7c5","Difesa Siciliana: il Nero non copia il Bianco e lotta per il centro dal lato di donna."],
+"e2e4 c7c5 g1f3":["d7d6","Siciliana, variante Najdorf/Scheveningen: il pedone d6 prepara lo sviluppo dei pezzi."],
+"e2e4 c7c5 b1c3":["b8c6","Siciliana chiusa: il Nero sviluppa il cavallo e controlla d4."],
+"d2d4":["d7d5","Apertura di pedone di donna: il Nero occupa il centro con una risposta simmetrica."],
+"d2d4 d7d5 c2c4":["e7e6","Gambetto di Donna rifiutato: il Nero difende d5 senza prendere il pedone."],
+"d2d4 d7d5 g1f3":["g8f6","Sistema Londra o Colle: il Nero sviluppa il cavallo verso il centro."],
+"c2c4":["e7e5","Apertura Inglese: il Nero risponde con una Siciliana a colori invertiti."],
+"g1f3":["d7d5","Apertura Réti: il Nero prende subito il centro con il pedone."],
+"e2e4 c7c5 g1f3 d7d6 d2d4":["c5d4","Siciliana aperta: il Nero cambia il pedone c5 con il pedone centrale d4 del Bianco."],
+"e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4":["g8f6","Il Nero sviluppa il cavallo e attacca il pedone e4: è la strada verso la Najdorf."],
+"e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3":["a7a6","Variante Najdorf: a6 toglie la casella b5 ai pezzi bianchi e prepara b5."],
+"e2e4 c7c5 c2c3":["d7d5","Siciliana Alapin: il Nero reagisce subito al centro con d5."],
+"e2e4 c7c5 b1c3 b8c6 g1f3":["g7g6","Il Nero prepara il fianchetto dell’alfiere in g7, tipico della Siciliana Drago."],
+"d2d4 d7d5 c2c4 e7e6 b1c3":["g8f6","Gambetto di Donna rifiutato: sviluppo del cavallo e pressione sul centro."],
+"d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5":["f8e7","Il Nero sviluppa l’alfiere in e7 e rompe l’inchiodatura del cavallo."],
+"d2d4 d7d5 c2c4 e7e6 g1f3":["g8f6","Il Nero sviluppa i pezzi minori verso il centro prima dell’arrocco."],
+"d2d4 d7d5 g1f3 g8f6 c1f4":["e7e6","Sistema Londra: il Nero apre l’alfiere di casa chiara e prepara c5."],
+"d2d4 d7d5 g1f3 g8f6 e2e3":["e7e6","Sistema Colle: struttura solida e simmetrica, sviluppo dei pezzi."],
+"c2c4 e7e5 b1c3":["g8f6","Inglese: il Nero sviluppa e controlla la casella d4."],
+"c2c4 e7e5 b1c3 g8f6 g1f3":["b8c6","Il Nero porta il cavallo di donna al centro e difende e5."],
+"g1f3 d7d5 d2d4":["g8f6","Si transita verso strutture di Donna: il Nero sviluppa e mantiene d5."],
+"g1f3 d7d5 g2g3":["g8f6","Il Bianco prepara il fianchetto (Réti): il Nero sviluppa senza fretta."]
+};
+
+let board,turn,sel,last,over,busy,hist,legalSel;
+
+function col(p){return p===p.toUpperCase()?'W':'B'}
+function inB(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function sqName(r,c){return FILES[c]+(8-r)}
+function copy(b){const n=b.map(x=>x.slice());n.cr={...b.cr};n.ep=b.ep;return n}
+
+function attacked(b,r,c,by){
+  const P=by==='W'?'P':'p',N=by==='W'?'N':'n',K=by==='W'?'K':'k',
+        R=by==='W'?'R':'r',B=by==='W'?'B':'b',Q=by==='W'?'Q':'q';
+  const pr=by==='W'?r+1:r-1;
+  for(const dc of[-1,1])if(inB(pr,c+dc)&&b[pr][c+dc]===P)return true;
+  for(const[a,d]of KN)if(inB(r+a,c+d)&&b[r+a][c+d]===N)return true;
+  for(const[a,d]of KG)if(inB(r+a,c+d)&&b[r+a][c+d]===K)return true;
+  const ray=(dirs,t1,t2)=>{for(const[a,d]of dirs){let y=r+a,x=c+d;
+    while(inB(y,x)){const p=b[y][x];if(p){if(p===t1||p===t2)return true;break}y+=a;x+=d}}return false};
+  return ray(RK,R,Q)||ray(BS,B,Q);
+}
+function kingPos(b,color){const k=color==='W'?'K':'k';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(b[r][c]===k)return[r,c];return null}
+function inCheck(b,color){const k=kingPos(b,color);return k?attacked(b,k[0],k[1],color==='W'?'B':'W'):false}
+
+function pseudo(b,r,c){
+  const p=b[r][c],cl=col(p),t=p.toLowerCase(),out=[];
+  const add=(y,x)=>{if(!inB(y,x))return false;const q=b[y][x];
+    if(!q){out.push([y,x]);return true}if(col(q)!==cl)out.push([y,x]);return false};
+  if(t==='p'){const d=cl==='W'?-1:1,st=cl==='W'?6:1;
+    if(inB(r+d,c)&&!b[r+d][c]){out.push([r+d,c]);if(r===st&&!b[r+2*d][c])out.push([r+2*d,c])}
+    for(const dc of[-1,1])if(inB(r+d,c+dc)&&b[r+d][c+dc]&&col(b[r+d][c+dc])!==cl)out.push([r+d,c+dc]);
+    if(b.ep&&b.ep[0]===r+d&&Math.abs(b.ep[1]-c)===1)out.push([r+d,b.ep[1]]);
+  }else if(t==='n'){for(const[a,d]of KN)add(r+a,c+d)}
+  else if(t==='k'){for(const[a,d]of KG)add(r+a,c+d);
+    const hr=cl==='W'?7:0,opp=cl==='W'?'B':'W',R=cl==='W'?'R':'r';
+    if(b.cr&&r===hr&&c===4&&!attacked(b,hr,4,opp)){
+      if(b.cr[cl+'K']&&b[hr][7]===R&&!b[hr][5]&&!b[hr][6]&&!attacked(b,hr,5,opp))out.push([hr,6]);
+      if(b.cr[cl+'Q']&&b[hr][0]===R&&!b[hr][1]&&!b[hr][2]&&!b[hr][3]&&!attacked(b,hr,3,opp))out.push([hr,2]);
+    }}
+  else{const dirs=t==='r'?RK:t==='b'?BS:KG;
+    for(const[a,d]of dirs){let y=r+a,x=c+d;while(add(y,x)&&!b[y][x]){y+=a;x+=d}}}
+  return out;
+}
+function make(b,fr,fc,tr,tc,promo){
+  const n=copy(b);let p=n[fr][fc];const cl=col(p),t=p.toLowerCase();
+  if(t==='p'&&fc!==tc&&!n[tr][tc])n[fr][tc]='';
+  if(t==='k'&&Math.abs(tc-fc)===2){const rr=tc>fc?7:0,rt=tc>fc?5:3;n[fr][rt]=n[fr][rr];n[fr][rr]=''}
+  if(t==='p'&&(tr===0||tr===7)){const q=promo||'q';p=cl==='W'?q.toUpperCase():q}
+  n.ep=(t==='p'&&Math.abs(tr-fr)===2)?[(fr+tr)/2,fc]:null;
+  if(t==='k'){n.cr[cl+'K']=false;n.cr[cl+'Q']=false}
+  const lose=(y,x)=>{if(y===7&&x===0)n.cr.WQ=false;if(y===7&&x===7)n.cr.WK=false;if(y===0&&x===0)n.cr.BQ=false;if(y===0&&x===7)n.cr.BK=false};
+  lose(fr,fc);lose(tr,tc);
+  n[tr][tc]=p;n[fr][fc]='';return n;
+}
+function legalFrom(b,r,c){
+  const cl=col(b[r][c]);
+  return pseudo(b,r,c).filter(([y,x])=>!inCheck(make(b,r,c,y,x),cl));
+}
+function allMoves(b,color){
+  const ms=[];
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];
+    if(p&&col(p)===color)for(const[y,x]of legalFrom(b,r,c))ms.push([r,c,y,x])}
+  return ms;
+}
+
+// Valutazione (positiva = meglio per il Nero)
+function evalB(b){
+  let s=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c];if(!p)continue;
+    const t=p.toLowerCase();let v=VAL[t];
+    if(t!=='k')v+=(3.5-Math.abs(3.5-r))*3+(3.5-Math.abs(3.5-c))*3;
+    s+=col(p)==='B'?v:-v}
+  return s;
+}
+function search(b,depth,alpha,beta,color){
+  const ms=allMoves(b,color);
+  if(!ms.length)return inCheck(b,color)?(color==='B'?-99999-depth:99999+depth):0;
+  if(depth===0)return evalB(b);
+  ms.sort((a,z)=>(b[z[2]][z[3]]?1:0)-(b[a[2]][a[3]]?1:0));
+  if(color==='B'){let best=-Infinity;
+    for(const m of ms){best=Math.max(best,search(make(b,...m),depth-1,alpha,beta,'W'));
+      alpha=Math.max(alpha,best);if(alpha>=beta)break}return best}
+  let best=Infinity;
+  for(const m of ms){best=Math.min(best,search(make(b,...m),depth-1,alpha,beta,'B'));
+    beta=Math.min(beta,best);if(alpha>=beta)break}return best;
+}
+function bestMove(){
+  const ms=allMoves(board,'B');let top=-Infinity,pool=[];
+  for(const m of ms){const v=search(make(board,...m),1,-Infinity,Infinity,'W')+Math.random()*4;
+    if(v>top){top=v;pool=[m]}else if(v===top)pool.push(m)}
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function setStatus(t){document.getElementById('status').textContent=t}
+
+function render(){
+  const el=document.getElementById('board');let h='';
+  const ck=!over&&inCheck(board,turn)?kingPos(board,turn):null;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    let cls='sq '+((r+c)%2===0?'l':'d');
+    if(sel&&sel[0]===r&&sel[1]===c)cls+=' sel';
+    if(last&&((last[0]===r&&last[1]===c)||(last[2]===r&&last[3]===c)))cls+=' last';
+    if(ck&&ck[0]===r&&ck[1]===c)cls+=' chk';
+    if(legalSel.some(m=>m[0]===r&&m[1]===c))cls+=board[r][c]?' cap':' dot';
+    const p=board[r][c];
+    h+=`<div class="${cls}" data-r="${r}" data-c="${c}">`+
+      (c===0?`<span class="co r">${8-r}</span>`:'')+(r===7?`<span class="co f">${FILES[c]}</span>`:'')+
+      (p?`<span class="${col(p)==='W'?'w':'b'}">${G[p.toLowerCase()]}\uFE0E</span>`:'')+`</div>`;
+  }
+  el.innerHTML=h;
+}
+
+function turnText(){
+  const who=turn==='W'?'Bianco':'Nero';
+  return inCheck(board,turn)?`Scacco al ${who}! Proteggi il re.`:`Tocca al ${who}. Tocca un pezzo per vedere le mosse possibili.`;
+}
+function afterMove(note){
+  turn=turn==='W'?'B':'W';
+  const ms=allMoves(board,turn);
+  if(!ms.length){over=true;
+    if(inCheck(board,turn))setStatus(`Scacco matto! Vince il ${turn==='W'?'Nero':'Bianco'}.`);
+    else setStatus('Stallo: nessuna mossa legale e il re non è sotto scacco. Patta.');
+  }else setStatus((note?note+'\n':'')+turnText());
+  render();
+}
+
+function doPlayerMove(fr,fc,r,c,promo){
+  const mode=document.getElementById('mode').value;
+  board=make(board,fr,fc,r,c,promo);
+  hist.push(sqName(fr,fc)+sqName(r,c));last=[fr,fc,r,c];
+  sel=null;legalSel=[];busy=false;
+  afterMove('');
+  if(!over&&mode==='pvc'){busy=true;setStatus('Il computer sta pensando…');setTimeout(computerMove,600)}
+}
+function askPromo(fr,fc,r,c){
+  busy=true;const el=document.getElementById('promo');
+  el.innerHTML=['q','r','b','n'].map(t=>`<button data-t="${t}">${G[t]}\uFE0E</button>`).join('');
+  el.style.display='flex';setStatus('Promozione! Scegli il nuovo pezzo.');
+  el.onclick=e=>{const b=e.target.closest('button');if(!b)return;
+    el.style.display='none';busy=false;doPlayerMove(fr,fc,r,c,b.dataset.t)};
+}
+function clickSq(r,c){
+  if(over||busy)return;
+  const mode=document.getElementById('mode').value;
+  if(mode==='pvc'&&turn==='B')return;
+  const p=board[r][c];
+  if(sel){
+    const m=legalSel.find(x=>x[0]===r&&x[1]===c);
+    if(m){
+      const [fr,fc]=sel;
+      if(board[fr][fc].toLowerCase()==='p'&&(r===0||r===7))askPromo(fr,fc,r,c);
+      else doPlayerMove(fr,fc,r,c,'q');
+      return;
+    }
+  }
+  if(p&&col(p)===turn){sel=[r,c];legalSel=legalFrom(board,r,c).map(([y,x])=>[y,x]);
+    if(!legalSel.length)setStatus('Questo pezzo non ha mosse legali.')}
+  else{sel=null;legalSel=[]}
+  render();
+}
+
+function computerMove(){
+  let m=null,note='';
+  const key=hist.join(' '),bk=BOOK[key];
+  if(bk){const f=[8-bk[0][1],FILES.indexOf(bk[0][0]),8-bk[0][3],FILES.indexOf(bk[0][2])];
+    if(allMoves(board,'B').some(x=>x.join()===[f[0],f[1],f[2],f[3]].join())){m=f;note='📚 '+bk[1]}}
+  if(!m)m=bestMove();
+  board=make(board,...m);
+  hist.push(sqName(m[0],m[1])+sqName(m[2],m[3]));last=m;
+  busy=false;afterMove(note);
+}
+
+function resetGame(){
+  board=[['r','n','b','q','k','b','n','r'],['p','p','p','p','p','p','p','p'],Array(8).fill(''),Array(8).fill(''),
+    Array(8).fill(''),Array(8).fill(''),['P','P','P','P','P','P','P','P'],['R','N','B','Q','K','B','N','R']];
+  board.cr={WK:true,WQ:true,BK:true,BQ:true};board.ep=null;
+  document.getElementById('promo').style.display='none';
+  turn='W';sel=null;last=null;over=false;busy=false;hist=[];legalSel=[];
+  setStatus('Tocca un pezzo per vedere le mosse possibili. Il Bianco muove per primo.');
+  render();
+}
+document.getElementById('board').addEventListener('click',e=>{
+  const s=e.target.closest('.sq');if(s)clickSq(+s.dataset.r,+s.dataset.c)});
+resetGame();
+</script>
+</body>
+</html>
