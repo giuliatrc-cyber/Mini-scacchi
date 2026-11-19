@@ -6,47 +6,250 @@
 <title>Mini Scacchi Didattici</title>
 <meta name="color-scheme" content="light dark">
 <style>
-:root{--bg:#f0f2f5;--fg:#222;--card:#e6f0ff;--cardfg:#0b3d7a;--btn:#007aff;--lt:#ebd9b4;--dk:#b58863;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181c;--fg:#eee;--card:#1f2a3d;--cardfg:#cfe2ff}}
-:root[data-theme="dark"]{--bg:#17181c;--fg:#eee;--card:#1f2a3d;--cardfg:#cfe2ff}
+:root{
+  --bg:#eef3f7;
+  --fg:#233848;
+  --card:#ffffff;
+  --cardfg:#234e6b;
+  --btn:#4298b5;
+  --btn-shadow:#2c6f87;
+  --btn2:#769ab3;
+  --btn2-shadow:#53748a;
+  --lt:#f4f5f0;
+  --dk:#4298b5;
+  --frame:#668ba4;
+  --frame-dark:#46667c;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#162029;
+    --fg:#eaf2f8;
+    --card:#20303d;
+    --cardfg:#d8ecf8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#162029;
+  --fg:#eaf2f8;
+  --card:#20303d;
+  --cardfg:#d8ecf8;
+}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden}
-h1{font-size:1.2rem;margin:0}
-select{font-size:.9rem;padding:3px}
-#status{width:min(92vw,520px);min-height:3.2rem;display:flex;align-items:center;justify-content:center;text-align:center;
-font-size:.88rem;font-weight:500;padding:4px 10px;background:var(--card);color:var(--cardfg);border-radius:8px;box-sizing:border-box;white-space:pre-line}
-#board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
-width:min(94vw,56dvh);height:min(94vw,56dvh);border:4px solid #333;border-radius:4px;box-shadow:0 8px 16px rgba(0,0,0,.25)}
-.sq{position:relative;display:flex;align-items:center;justify-content:center;font-size:min(9vw,5.4dvh);
-cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
-.l{background:var(--lt)}.d{background:var(--dk)}
-.sel{background:#f6f669!important}.last{box-shadow:inset 0 0 0 100px rgba(255,235,59,.35)}
+body{
+  margin:0;
+  background:radial-gradient(circle at top, #f7fafc 0%, var(--bg) 100%);
+  color:var(--fg);
+  font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  overflow:hidden;
+}
+@media (prefers-color-scheme:dark){
+  body{background:var(--bg);}
+}
+h1{
+  font-size:1.35rem;
+  font-weight:800;
+  letter-spacing:-0.02em;
+  margin:0;
+  color:var(--dk);
+}
+.top-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.9rem;
+  font-weight:600;
+}
+select{
+  font-size:.88rem;
+  font-weight:600;
+  padding:5px 10px;
+  border-radius:10px;
+  border:2px solid var(--frame);
+  background:var(--card);
+  color:var(--fg);
+  cursor:pointer;
+  outline:none;
+}
+#status{
+  width:min(92vw,500px);
+  min-height:3.3rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:.88rem;
+  font-weight:600;
+  line-height:1.35;
+  padding:6px 14px;
+  background:var(--card);
+  color:var(--cardfg);
+  border-radius:14px;
+  border:2px solid rgba(102,139,164,0.25);
+  box-shadow:0 4px 12px rgba(35,56,72,0.06);
+  box-sizing:border-box;
+  white-space:pre-line;
+}
+.board-wrap{
+  padding:10px;
+  background:var(--frame);
+  border-radius:18px;
+  box-shadow:0 8px 0 var(--frame-dark), 0 16px 28px rgba(35,56,72,0.22);
+}
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  width:min(88vw,52dvh);
+  height:min(88vw,52dvh);
+  border-radius:10px;
+  overflow:hidden;
+}
+.sq{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:min(8.6vw,5dvh);
+  cursor:pointer;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:filter .12s ease;
+}
+.l{background:var(--lt)}
+.d{background:var(--dk)}
+.sel{background:#ffe66d!important}
+.last{box-shadow:inset 0 0 0 100px rgba(255,230,109,0.42)}
 .chk{background:#ff6b6b!important}
-.w{color:#fff;text-shadow:0 0 2px #000,0 1px 2px #000}.b{color:#111}
-.dot::after{content:"";position:absolute;width:28%;height:28%;border-radius:50%;background:rgba(0,0,0,.25)}
-.cap::after{width:88%;height:88%;background:none;border:4px solid rgba(0,0,0,.3);box-sizing:border-box}
-.co{position:absolute;font-size:min(2.2vw,1.3dvh);font-weight:700;pointer-events:none}
-.co.r{top:2px;left:3px}.co.f{bottom:1px;right:3px}
-.l .co{color:var(--dk)}.d .co{color:var(--lt)}
-button{padding:9px 18px;font-size:.9rem;background:var(--btn);color:#fff;border:0;border-radius:8px;cursor:pointer}
-button:active{opacity:.8}
-#promo{display:none;gap:8px}
-#promo button{font-size:1.8rem;padding:2px 14px;background:#fff;color:#111}
+
+/* Pezzi stile pop/3D ispirati al set azzurro e bianco */
+.piece{
+  display:inline-block;
+  line-height:1;
+  transition:transform .12s ease;
+}
+.sq:hover .piece{transform:translateY(-2px)}
+.w{
+  color:#ffffff;
+  -webkit-text-stroke:1.4px #7b8c98;
+  filter:drop-shadow(0 3px 2px rgba(30,50,65,0.35));
+}
+.b{
+  color:#60aae0;
+  -webkit-text-stroke:1.4px #1f4f73;
+  filter:drop-shadow(0 3px 2px rgba(15,35,50,0.42));
+}
+
+.dot::after{
+  content:"";
+  position:absolute;
+  width:28%;
+  height:28%;
+  border-radius:50%;
+  background:rgba(255,255,255,0.65);
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+.l.dot::after{background:rgba(66,152,181,0.45)}
+.cap::after{
+  content:"";
+  position:absolute;
+  width:84%;
+  height:84%;
+  border-radius:50%;
+  background:none;
+  border:3.5px solid rgba(255,230,109,0.9);
+  box-shadow:0 0 6px rgba(0,0,0,0.2);
+  box-sizing:border-box;
+}
+.co{
+  position:absolute;
+  font-size:min(2.1vw,1.25dvh);
+  font-weight:800;
+  pointer-events:none;
+  opacity:.85;
+}
+.co.r{top:2px;left:4px}
+.co.f{bottom:2px;right:4px}
+.l .co{color:var(--dk)}
+.d .co{color:var(--lt)}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:2px;
+}
+button{
+  padding:10px 18px;
+  font-size:.9rem;
+  font-weight:700;
+  background:var(--btn);
+  color:#fff;
+  border:0;
+  border-radius:12px;
+  box-shadow:0 4px 0 var(--btn-shadow);
+  cursor:pointer;
+  transition:transform .08s ease, box-shadow .08s ease, opacity .15s ease;
+}
+button:active:not(:disabled){
+  transform:translateY(3px);
+  box-shadow:0 1px 0 var(--btn-shadow);
+}
+button.secondary{
+  background:var(--btn2);
+  box-shadow:0 4px 0 var(--btn2-shadow);
+}
+button.secondary:active:not(:disabled){
+  box-shadow:0 1px 0 var(--btn2-shadow);
+}
+button:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+  transform:none;
+}
+#promo{
+  display:none;
+  gap:8px;
+  background:var(--card);
+  padding:6px 10px;
+  border-radius:14px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.18);
+}
+#promo button{
+  font-size:1.7rem;
+  padding:4px 12px;
+  background:var(--lt);
+  color:#233848;
+  box-shadow:0 3px 0 #c5ccd1;
+}
 </style>
 </head>
 <body>
 <h1>Mini Scacchi Didattici</h1>
-<label>Modalità:
-<select id="mode" onchange="resetGame()">
-<option value="pvp">Giocatore contro giocatore</option>
-<option value="pvc" selected>Giocatore contro computer</option>
-</select></label>
+<div class="top-bar">
+  <label for="mode">Modalità:</label>
+  <select id="mode" onchange="resetGame()">
+    <option value="pvp">Giocatore vs Giocatore</option>
+    <option value="pvc" selected>Giocatore vs Computer</option>
+  </select>
+</div>
 <div id="status"></div>
-<div id="board"></div>
+<div class="board-wrap">
+  <div id="board"></div>
+</div>
 <div id="promo"></div>
-<button onclick="resetGame()">Nuova partita</button>
+<div class="controls">
+  <button id="undoBtn" class="secondary" onclick="undoMove()" disabled>↩ Indietro</button>
+  <button onclick="resetGame()">Nuova partita</button>
+</div>
 
 <script>
 const G={r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',p:'♟'};
@@ -82,12 +285,12 @@ const BOOK={
 "g1f3 d7d5 g2g3":["g8f6","Il Bianco prepara il fianchetto (Réti): il Nero sviluppa senza fretta."]
 };
 
-let board,turn,sel,last,over,busy,hist,legalSel;
+let board,turn,sel,last,over,checkmate,busy,hist,legalSel,states,aiTimer;
 
 function col(p){return p===p.toUpperCase()?'W':'B'}
 function inB(r,c){return r>=0&&r<8&&c>=0&&c<8}
 function sqName(r,c){return FILES[c]+(8-r)}
-function copy(b){const n=b.map(x=>x.slice());n.cr={...b.cr};n.ep=b.ep;return n}
+function copy(b){const n=b.map(x=>x.slice());n.cr={...b.cr};n.ep=b.ep?[...b.ep]:null;return n}
 
 function attacked(b,r,c,by){
   const P=by==='W'?'P':'p',N=by==='W'?'N':'n',K=by==='W'?'K':'k',
@@ -175,6 +378,51 @@ function bestMove(){
 
 function setStatus(t){document.getElementById('status').textContent=t}
 
+function saveState(){
+  states.push({
+    board:copy(board),
+    turn:turn,
+    last:last?[...last]:null,
+    hist:[...hist]
+  });
+}
+
+function updateUndoBtn(){
+  const btn=document.getElementById('undoBtn');
+  // Sempre possibile finché ci sono mosse nello storico, tranne in caso di scacco matto
+  btn.disabled = checkmate || states.length <= 1;
+}
+
+function undoMove(){
+  if(checkmate || states.length <= 1) return;
+  if(aiTimer){clearTimeout(aiTimer);aiTimer=null;}
+  document.getElementById('promo').style.display='none';
+
+  const mode=document.getElementById('mode').value;
+  // Contro il computer, se tocca al Bianco annulliamo 2 mezze mosse (risposta AI + mossa giocatore).
+  // Se il computer stava ancora pensando (turno Nero), annulliamo solo la mossa appena fatta dal giocatore.
+  let steps = (mode==='pvc' && turn==='W' && states.length > 2) ? 2 : 1;
+  while(steps > 0 && states.length > 1){
+    states.pop();
+    steps--;
+  }
+
+  const prev = states[states.length - 1];
+  board = copy(prev.board);
+  turn = prev.turn;
+  last = prev.last ? [...prev.last] : null;
+  hist = [...prev.hist];
+  sel = null;
+  legalSel = [];
+  over = false;
+  checkmate = false;
+  busy = false;
+
+  setStatus('Mossa annullata. ' + turnText());
+  render();
+  updateUndoBtn();
+}
+
 function render(){
   const el=document.getElementById('board');let h='';
   const ck=!over&&inCheck(board,turn)?kingPos(board,turn):null;
@@ -187,7 +435,7 @@ function render(){
     const p=board[r][c];
     h+=`<div class="${cls}" data-r="${r}" data-c="${c}">`+
       (c===0?`<span class="co r">${8-r}</span>`:'')+(r===7?`<span class="co f">${FILES[c]}</span>`:'')+
-      (p?`<span class="${col(p)==='W'?'w':'b'}">${G[p.toLowerCase()]}\uFE0E</span>`:'')+`</div>`;
+      (p?`<span class="piece ${col(p)==='W'?'w':'b'}">${G[p.toLowerCase()]}\uFE0E</span>`:'')+`</div>`;
   }
   el.innerHTML=h;
 }
@@ -198,12 +446,21 @@ function turnText(){
 }
 function afterMove(note){
   turn=turn==='W'?'B':'W';
+  saveState();
   const ms=allMoves(board,turn);
-  if(!ms.length){over=true;
-    if(inCheck(board,turn))setStatus(`Scacco matto! Vince il ${turn==='W'?'Nero':'Bianco'}.`);
-    else setStatus('Stallo: nessuna mossa legale e il re non è sotto scacco. Patta.');
-  }else setStatus((note?note+'\n':'')+turnText());
+  if(!ms.length){
+    over=true;
+    if(inCheck(board,turn)){
+      checkmate=true;
+      setStatus(`Scacco matto! Vince il ${turn==='W'?'Nero':'Bianco'}.`);
+    } else {
+      setStatus('Stallo: nessuna mossa legale e il re non è sotto scacco. Patta.');
+    }
+  } else {
+    setStatus((note?note+'\n':'')+turnText());
+  }
   render();
+  updateUndoBtn();
 }
 
 function doPlayerMove(fr,fc,r,c,promo){
@@ -212,7 +469,11 @@ function doPlayerMove(fr,fc,r,c,promo){
   hist.push(sqName(fr,fc)+sqName(r,c));last=[fr,fc,r,c];
   sel=null;legalSel=[];busy=false;
   afterMove('');
-  if(!over&&mode==='pvc'){busy=true;setStatus('Il computer sta pensando…');setTimeout(computerMove,600)}
+  if(!over&&mode==='pvc'){
+    busy=true;
+    setStatus('Il computer sta pensando…');
+    aiTimer=setTimeout(computerMove,550);
+  }
 }
 function askPromo(fr,fc,r,c){
   busy=true;const el=document.getElementById('promo');
@@ -242,6 +503,7 @@ function clickSq(r,c){
 }
 
 function computerMove(){
+  aiTimer=null;
   let m=null,note='';
   const key=hist.join(' '),bk=BOOK[key];
   if(bk){const f=[8-bk[0][1],FILES.indexOf(bk[0][0]),8-bk[0][3],FILES.indexOf(bk[0][2])];
@@ -253,13 +515,17 @@ function computerMove(){
 }
 
 function resetGame(){
+  if(aiTimer){clearTimeout(aiTimer);aiTimer=null;}
   board=[['r','n','b','q','k','b','n','r'],['p','p','p','p','p','p','p','p'],Array(8).fill(''),Array(8).fill(''),
     Array(8).fill(''),Array(8).fill(''),['P','P','P','P','P','P','P','P'],['R','N','B','Q','K','B','N','R']];
   board.cr={WK:true,WQ:true,BK:true,BQ:true};board.ep=null;
   document.getElementById('promo').style.display='none';
-  turn='W';sel=null;last=null;over=false;busy=false;hist=[];legalSel=[];
+  turn='W';sel=null;last=null;over=false;checkmate=false;busy=false;hist=[];legalSel=[];
+  states=[];
+  saveState();
   setStatus('Tocca un pezzo per vedere le mosse possibili. Il Bianco muove per primo.');
   render();
+  updateUndoBtn();
 }
 document.getElementById('board').addEventListener('click',e=>{
   const s=e.target.closest('.sq');if(s)clickSq(+s.dataset.r,+s.dataset.c)});
